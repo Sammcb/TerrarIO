@@ -21,6 +21,7 @@ class WorldDocument: ReferenceFileDocument {
 	
 	@Published var world = World()
 	@Published var paths: MapPaths = [:]
+	@Published var pathsDone = false
 	static let pixelScale = 1
 	
 	init() {}
@@ -35,6 +36,7 @@ class WorldDocument: ReferenceFileDocument {
 			let paths = await Self.generatePaths(world: world)
 			await MainActor.run {
 				self.paths = paths
+				self.pathsDone = true
 			}
 		}
 	}
@@ -87,15 +89,15 @@ extension WorldDocument {
 								continue
 							}
 			
-//							let color = pathColor(for: tile)
+							let color = pathColor(for: tile)
 							// 693 possible tiles
-							initColorV += 1
-							if initColorV > totalColors {
-								initColorV = 0
-							}
-							
-							let v = Double(initColorV) / Double(totalColors) // max color value will be 231 < 255
-							let	color = Color(red: v, green: v, blue: v)
+//							initColorV += 1
+//							if initColorV > totalColors {
+//								initColorV = 0
+//							}
+//
+//							let v = Double(initColorV) / Double(totalColors) // max color value will be 231 < 255
+//							let	color = Color(red: v, green: v, blue: v)
 //							let color: Color = .red
 							
 							// If the tracked line is for the current tile
@@ -104,17 +106,17 @@ extension WorldDocument {
 							}
 							
 							// Start tracking a new line if the tracked line is for a different tile and is for an empty tile
-							guard currentLine.color != nil else {
+							guard let currentLineColor = currentLine.color else {
 								currentLine = (color, columnIndex)
 								continue
 							}
 							
 							// If the tracked line is for a different tile and is not for an empty tile, store the tracked line
-							var path = chunkPaths[color] ?? Path()
+							var path = chunkPaths[currentLineColor] ?? Path()
 							let startPoint = CGPoint(x: xCoordinate, y: currentLine.start)
 							let endPoint = CGPoint(x: xCoordinate, y: columnIndex)
 							path.addLines([startPoint, endPoint])
-							chunkPaths[color] = path
+							chunkPaths[currentLineColor] = path
 							
 							currentLine = (color, columnIndex)
 						}

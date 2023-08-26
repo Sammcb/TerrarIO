@@ -40,6 +40,7 @@ struct WorldView: View {
 			Text("Tile count: \(document.world.properties.width * document.world.properties.height)")
 			Text("main frame: \(mainFrame.debugDescription)")
 			Text("map frame: \(mapFrame.debugDescription)")
+			Text("Path processing done: \(String(document.pathsDone))")
 			GeometryReader { outerProxy in
 				ScrollView([.horizontal, .vertical]) {
 					GeometryReader { proxy in
@@ -99,9 +100,9 @@ struct WorldView: View {
 //							for (color, path) in document.paths.filter({ (color, path) in visibleRect.intersects(path.boundingRect) }) {
 //								context.stroke(path, with: .color(color), lineWidth: CGFloat(WorldDocument.pixelScale))
 //							}
-//							for (color, path) in document.paths {
-//								context.stroke(path, with: .color(color), lineWidth: CGFloat(WorldDocument.pixelScale))
-//							}
+							for (color, path) in document.paths {
+								context.stroke(path, with: .color(color), lineWidth: CGFloat(WorldDocument.pixelScale))
+							}
 						}
 						.frame(width: CGFloat(document.world.properties.width), height: CGFloat(document.world.properties.height))
 						.onChange(of: proxy.frame(in: .named(mapCoordinateSpace))) { newFrame in

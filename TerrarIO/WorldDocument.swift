@@ -61,42 +61,6 @@ extension WorldDocument {
 		return nil
 	}
 	
-	private struct SegmentedPath {
-		typealias Segment = (start: CGPoint, end: CGPoint)
-		var segments: [Segment]
-		
-		init(from startPoint: CGPoint, to endPoint: CGPoint) {
-			let segment: Segment = (start: startPoint, end: endPoint)
-			segments = [segment]
-		}
-		
-		mutating func addLine(from startPoint: CGPoint, to endPoint: CGPoint) {
-			let segment: Segment = (start: startPoint, end: endPoint)
-			guard var lastSegment = segments.last else {
-				segments = [segment]
-				return
-			}
-			
-			guard lastSegment.end == startPoint else {
-				segments.append(segment)
-				return
-			}
-			
-			lastSegment.end = endPoint
-			let lastSegmentIndex = segments.count - 1
-			segments[lastSegmentIndex] = lastSegment
-		}
-		
-		func generatePath(for basePath: Path = Path()) -> Path {
-			var path = basePath
-			for segment in segments {
-				path.move(to: segment.start)
-				path.addLine(to: segment.end)
-			}
-			return path
-		}
-	}
-	
 	private static func generatePaths(world: World) async -> MapPaths {
 		typealias ColoredPaths = [Color: Path]
 		
@@ -113,6 +77,7 @@ extension WorldDocument {
 				let tileColumnsSubset = world.tiles.tiles[chunkIndex ..< min(chunkIndex + columnStride, worldWidth)]
 				group.addTask {
 					var chunkPaths: ColoredPaths = [:]
+					chunkPaths.reserveCapacity(1000)
 					for (rowIndex, tileColumn) in tileColumnsSubset.enumerated() {
 						var initColorV = rowIndex
 						var currentLine: (color: Color?, start: Int) = (nil, 0)
@@ -148,8 +113,7 @@ extension WorldDocument {
 							var path = chunkPaths[color] ?? Path()
 							let startPoint = CGPoint(x: xCoordinate, y: currentLine.start)
 							let endPoint = CGPoint(x: xCoordinate, y: columnIndex)
-							path.move(to: startPoint)
-							path.addLine(to: endPoint)
+							path.addLines([startPoint, endPoint])
 							chunkPaths[color] = path
 							
 							currentLine = (color, columnIndex)
@@ -163,8 +127,7 @@ extension WorldDocument {
 						var path = chunkPaths[color] ?? Path()
 						let startPoint = CGPoint(x: xCoordinate, y: currentLine.start)
 						let endPoint = CGPoint(x: xCoordinate, y: worldHeight)
-						path.move(to: startPoint)
-						path.addLine(to: endPoint)
+						path.addLines([startPoint, endPoint])
 						chunkPaths[color] = path
 					}
 					return chunkPaths

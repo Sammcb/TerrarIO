@@ -13,7 +13,7 @@ extension UTType {
 }
 
 class WorldDocument: ReferenceFileDocument {
-	typealias MapPaths = [Color: Path]
+	typealias MapPaths = [Color: [Path]]
 	
 	typealias Snapshot = World
 	
@@ -63,124 +63,109 @@ extension WorldDocument {
 		return nil
 	}
 	
-	private static func generatePaths(world: World) async -> MapPaths {
-		typealias ColoredPaths = [Color: Path]
+	private class Line {
+		typealias Segment = (start: CGPoint, end: CGPoint)
+		var segments: [Segment] = []
+	}
+	
+	private static func generatePaths(from world: World, in heightRange: Range<Int>, in widthRange: Range<Int>) -> [Color: Line] {
+		let tileColumnsSubset = world.tiles.tiles[widthRange]
+		var coloredLines: [Color: Line] = [:]
 		
-		return await withTaskGroup(of: ColoredPaths.self) { group in
-			let totalColors = 10
+		for (rowIndex, tileColumn) in tileColumnsSubset.enumerated() {
+			guard rowIndex % pixelScale == 0 else {
+				continue
+			}
 			
-			let columnStride = 1000
+			let tilesSubset = tileColumn[heightRange]
+			let xCoordinate = rowIndex + widthRange.lowerBound
+			var currentLine: (color: Color?, start: Int) = (nil, 0)
+			
+			for (columnIndex, tile) in tilesSubset.enumerated() {
+				guard columnIndex % pixelScale == 0 else {
+					continue
+				}
+				
+				let yCoordnate = columnIndex + heightRange.lowerBound
+				
+//				let color = pathColor(for: tile)
+				// 693 possible tiles
+				let totalColors = 693
+				let initColorV = (xCoordinate + yCoordnate) % totalColors
+				let v = Double(initColorV) / Double(totalColors)
+				let color = Color(hue: v, saturation: 1, brightness: 1)
+//				let color: Color = .red
+				
+				// If the tracked line is for the current tile
+				guard currentLine.color != color else {
+					continue
+				}
+				
+				// Start tracking a new line if the tracked line is for a different tile and is for an empty tile
+				guard let currentLineColor = currentLine.color else {
+					currentLine = (color, yCoordnate)
+					continue
+				}
+				
+				// If the tracked line is for a different tile and is not for an empty tile, store the tracked line
+				let line = coloredLines[currentLineColor] ?? Line()
+				let startPoint = CGPoint(x: xCoordinate, y: currentLine.start)
+				let endPoint = CGPoint(x: xCoordinate, y: yCoordnate)
+				line.segments.append((startPoint, endPoint))
+				coloredLines[currentLineColor] = line
+				
+				currentLine = (color, yCoordnate)
+			}
+			
+			guard let color = currentLine.color else {
+				continue
+			}
+			
+			// If the current line is not for an empty tile, store it
+			let line = coloredLines[color] ?? Line()
+			let startPoint = CGPoint(x: xCoordinate, y: currentLine.start)
+			let endPoint = CGPoint(x: xCoordinate, y: heightRange.upperBound)
+			line.segments.append((startPoint, endPoint))
+			coloredLines[color] = line
+		}
+		return coloredLines
+	}
+	
+	private static func generatePaths(world: World) async -> MapPaths {
+		typealias ColoredLines = [Color: Line]
+		
+		return await withTaskGroup(of: ColoredLines.self) { group in
+			let chunkSize: (width: Int, height: Int) = (1000, 500)
+			
 			let worldWidth = Int(world.properties.width)
 			let worldHeight = Int(world.properties.height)
-			for chunkIndex in stride(from: 0, to: worldWidth, by: columnStride) {
-//				if chunkIndex > 0 {
-//					break
-//				}
-				let tileColumnsSubset = world.tiles.tiles[chunkIndex ..< min(chunkIndex + columnStride, worldWidth)]
-				group.addTask {
-					var chunkPaths: ColoredPaths = [:]
-					chunkPaths.reserveCapacity(1000)
-					for (rowIndex, tileColumn) in tileColumnsSubset.enumerated() {
-						var initColorV = rowIndex
-						var currentLine: (color: Color?, start: Int) = (nil, 0)
-						let xCoordinate = rowIndex + chunkIndex
-						for (columnIndex, tile) in tileColumn.enumerated() {
-							guard columnIndex % pixelScale == 0 else {
-								continue
-							}
 			
-							let color = pathColor(for: tile)
-							// 693 possible tiles
-//							initColorV += 1
-//							if initColorV > totalColors {
-//								initColorV = 0
-//							}
-//
-//							let v = Double(initColorV) / Double(totalColors) // max color value will be 231 < 255
-//							let	color = Color(red: v, green: v, blue: v)
-//							let color: Color = .red
-							
-							// If the tracked line is for the current tile
-							guard currentLine.color != color else {
-								continue
-							}
-							
-							// Start tracking a new line if the tracked line is for a different tile and is for an empty tile
-							guard let currentLineColor = currentLine.color else {
-								currentLine = (color, columnIndex)
-								continue
-							}
-							
-							// If the tracked line is for a different tile and is not for an empty tile, store the tracked line
-							var path = chunkPaths[currentLineColor] ?? Path()
-							let startPoint = CGPoint(x: xCoordinate, y: currentLine.start)
-							let endPoint = CGPoint(x: xCoordinate, y: columnIndex)
-							path.addLines([startPoint, endPoint])
-							chunkPaths[currentLineColor] = path
-							
-							currentLine = (color, columnIndex)
-						}
-						
-						guard let color = currentLine.color else {
-							continue
-						}
-						
-						// If the current line is not for an empty tile, store it
-						var path = chunkPaths[color] ?? Path()
-						let startPoint = CGPoint(x: xCoordinate, y: currentLine.start)
-						let endPoint = CGPoint(x: xCoordinate, y: worldHeight)
-						path.addLines([startPoint, endPoint])
-						chunkPaths[color] = path
+			for horizontalChunkIndex in stride(from: 0, to: worldWidth, by: chunkSize.width) {
+				let horizontalChunkRange = horizontalChunkIndex ..< min(horizontalChunkIndex + chunkSize.width, worldWidth)
+					
+				for verticalChunkIndex in stride(from: 0, to: worldHeight, by: chunkSize.height) {
+					let verticalChunkRange = verticalChunkIndex ..< min(verticalChunkIndex + chunkSize.height, worldHeight)
+					
+					group.addTask {
+						return generatePaths(from: world, in: verticalChunkRange, in: horizontalChunkRange)
 					}
-					return chunkPaths
 				}
 			}
 			
 			var mapPaths: MapPaths = [:]
 			for await chunkPaths in group {
-				for (color, path) in chunkPaths {
-					guard var mapPath = mapPaths[color] else {
-						mapPaths[color] = path
-						continue
+				for (color, line) in chunkPaths {
+					var path = Path()
+					for segment in line.segments {
+						path.addLines([segment.start, segment.end])
 					}
+					var mapPath = mapPaths[color] ?? []
+					mapPath.append(path)
 					
-					path.forEach { element in
-						switch element {
-						case .move(to: let point): mapPath.move(to: point)
-						case .line(to: let point): mapPath.addLine(to: point)
-						default: return
-						}
-					}
 					mapPaths[color] = mapPath
 				}
 			}
-			print(mapPaths.count)
 			return mapPaths
-			
-//			var mapPaths: MapPaths = [:]
-//			for await segmentedPathChunk in group {
-//				print(segmentedPathChunk.count)
-//				for (color, segmentedPath) in segmentedPathChunk {
-//					guard let mapPath = mapPaths[color] else {
-//						let path = segmentedPath.generatePath()
-//						mapPaths[color] = path
-//						continue
-//					}
-//
-//					let path = segmentedPath.generatePath(for: mapPath)
-//					mapPaths[color] = path
-//				}
-//			}
-//
-//			for (color, path) in mapPaths {
-//				path.forEach { element in
-//					print(element)
-//				}
-//			}
-//
-//			print("Total paths: \(mapPaths.count)")
-//			return mapPaths
-//			return MapPaths()
 		}
 	}
 }

@@ -9,9 +9,9 @@ import SwiftUI
 
 @main
 struct TerrarIOApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
-    }
+	var body: some Scene {
+		DocumentGroup(newDocument: { WorldDocument() }) { configuration in
+			WorldView()
+		}
+	}
 }

@@ -8,18 +8,25 @@
 
 /* Begin PBXBuildFile section */
 		22464DB22A96889B008212D8 /* TerrarIOApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22464DB12A96889B008212D8 /* TerrarIOApp.swift */; };
-		22464DB42A96889B008212D8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22464DB32A96889B008212D8 /* ContentView.swift */; };
 		22464DB62A96889C008212D8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 22464DB52A96889C008212D8 /* Assets.xcassets */; };
 		22464DB92A96889C008212D8 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 22464DB82A96889C008212D8 /* Preview Assets.xcassets */; };
+		22464DC12A96E5D3008212D8 /* WorldDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22464DC02A96E5D3008212D8 /* WorldDocument.swift */; };
+		22464DC32A96E6A7008212D8 /* WorldReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22464DC22A96E6A7008212D8 /* WorldReader.swift */; };
+		22464DC52A96EBA6008212D8 /* World.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22464DC42A96EBA6008212D8 /* World.swift */; };
+		22464DC72A96F0DC008212D8 /* WorldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22464DC62A96F0DC008212D8 /* WorldView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		22464DAE2A96889B008212D8 /* TerrarIO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TerrarIO.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		22464DB12A96889B008212D8 /* TerrarIOApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerrarIOApp.swift; sourceTree = "<group>"; };
-		22464DB32A96889B008212D8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		22464DB52A96889C008212D8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		22464DB82A96889C008212D8 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		22464DBA2A96889C008212D8 /* TerrarIO.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TerrarIO.entitlements; sourceTree = "<group>"; };
+		22464DC02A96E5D3008212D8 /* WorldDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldDocument.swift; sourceTree = "<group>"; };
+		22464DC22A96E6A7008212D8 /* WorldReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldReader.swift; sourceTree = "<group>"; };
+		22464DC42A96EBA6008212D8 /* World.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = World.swift; sourceTree = "<group>"; };
+		22464DC62A96F0DC008212D8 /* WorldView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldView.swift; sourceTree = "<group>"; };
+		22464DC82A96F61C008212D8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,8 +59,12 @@
 		22464DB02A96889B008212D8 /* TerrarIO */ = {
 			isa = PBXGroup;
 			children = (
+				22464DC82A96F61C008212D8 /* Info.plist */,
 				22464DB12A96889B008212D8 /* TerrarIOApp.swift */,
-				22464DB32A96889B008212D8 /* ContentView.swift */,
+				22464DC22A96E6A7008212D8 /* WorldReader.swift */,
+				22464DC02A96E5D3008212D8 /* WorldDocument.swift */,
+				22464DC42A96EBA6008212D8 /* World.swift */,
+				22464DC62A96F0DC008212D8 /* WorldView.swift */,
 				22464DB52A96889C008212D8 /* Assets.xcassets */,
 				22464DBA2A96889C008212D8 /* TerrarIO.entitlements */,
 				22464DB72A96889C008212D8 /* Preview Content */,
@@ -139,8 +150,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				22464DB42A96889B008212D8 /* ContentView.swift in Sources */,
+				22464DC32A96E6A7008212D8 /* WorldReader.swift in Sources */,
+				22464DC12A96E5D3008212D8 /* WorldDocument.swift in Sources */,
 				22464DB22A96889B008212D8 /* TerrarIOApp.swift in Sources */,
+				22464DC52A96EBA6008212D8 /* World.swift in Sources */,
+				22464DC72A96F0DC008212D8 /* WorldView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -272,8 +286,9 @@
 				DEVELOPMENT_ASSET_PATHS = "\"TerrarIO/Preview Content\"";
 				DEVELOPMENT_TEAM = J8P6BA4WGF;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
+				ENABLE_PREVIEWS = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TerrarIO/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -299,8 +314,9 @@
 				DEVELOPMENT_ASSET_PATHS = "\"TerrarIO/Preview Content\"";
 				DEVELOPMENT_TEAM = J8P6BA4WGF;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
+				ENABLE_PREVIEWS = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TerrarIO/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

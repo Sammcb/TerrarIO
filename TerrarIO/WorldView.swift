@@ -52,8 +52,11 @@ struct WorldView: View {
 							let widthOffset = clamp(value: Int(-mapFrame.origin.x), to: 0 ..< worldWidth - visibleWidth)
 							let heightOffset = clamp(value: Int(-mapFrame.origin.y), to: 0 ..< worldHeight - visibleHeight)
 							let visibleRect = CGRect(x: widthOffset, y: heightOffset, width: visibleWidth, height: visibleHeight)
-							for (color, paths) in document.paths {
-								for path in paths.filter({ $0.boundingRect.intersects(visibleRect) }) {
+							for (chunk, colorPaths) in document.paths {
+								guard chunk.cgRect.intersects(visibleRect) else {
+									continue
+								}
+								for (color, path) in colorPaths {
 									context.stroke(path, with: .color(color), lineWidth: CGFloat(WorldDocument.pixelScale))
 								}
 							}

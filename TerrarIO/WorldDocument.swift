@@ -12,8 +12,18 @@ extension UTType {
 	static let worldDocument = UTType(exportedAs: "com.sammcb.terrario")
 }
 
+struct Rect: Hashable {
+	let x: Int
+	let y: Int
+	let width: Int
+	let height: Int
+	var cgRect: CGRect {
+		CGRect(x: x, y: y, width: width, height: height)
+	}
+}
+
 class WorldDocument: ReferenceFileDocument {
-	typealias MapPaths = [Color: [Path]]
+	typealias MapPaths = [Rect: [Color: Path]]
 	
 	typealias Snapshot = World
 	
@@ -51,7 +61,7 @@ class WorldDocument: ReferenceFileDocument {
 	}
 }
 
-extension WorldDocument {	
+extension WorldDocument {
 	private static func pathColor(for tile: World.Tiles.Tile) -> Color? {
 		if tile.hasTile {
 			return .brown
@@ -66,9 +76,16 @@ extension WorldDocument {
 	private class Line {
 		typealias Segment = (start: CGPoint, end: CGPoint)
 		var segments: [Segment] = []
+		var path: Path {
+			var path = Path()
+			for segment in segments {
+				path.addLines([segment.start, segment.end])
+			}
+			return path
+		}
 	}
 	
-	private static func generatePaths(from world: World, in heightRange: Range<Int>, in widthRange: Range<Int>) -> [Color: Line] {
+	private static func chunkPaths(from world: World, in heightRange: Range<Int>, in widthRange: Range<Int>) -> [Rect: [Color: Line]] {
 		let tileColumnsSubset = world.tiles.tiles[widthRange]
 		var coloredLines: [Color: Line] = [:]
 		
@@ -88,12 +105,12 @@ extension WorldDocument {
 				
 				let yCoordnate = columnIndex + heightRange.lowerBound
 				
-//				let color = pathColor(for: tile)
+				let color = pathColor(for: tile)
 				// 693 possible tiles
 				let totalColors = 693
 				let initColorV = (xCoordinate + yCoordnate) % totalColors
 				let v = Double(initColorV) / Double(totalColors)
-				let color = Color(hue: v, saturation: 1, brightness: 1)
+//				let color = Color(hue: v, saturation: 1, brightness: 1)
 //				let color: Color = .red
 				
 				// If the tracked line is for the current tile
@@ -128,13 +145,12 @@ extension WorldDocument {
 			line.segments.append((startPoint, endPoint))
 			coloredLines[color] = line
 		}
-		return coloredLines
+		let chunkRect = Rect(x: widthRange.lowerBound, y: heightRange.lowerBound, width: widthRange.count, height: heightRange.count)
+		return [chunkRect: coloredLines]
 	}
 	
 	private static func generatePaths(world: World) async -> MapPaths {
-		typealias ColoredLines = [Color: Line]
-		
-		return await withTaskGroup(of: ColoredLines.self) { group in
+		return await withTaskGroup(of: [Rect: [Color: Line]].self) { group in
 			let chunkSize: (width: Int, height: Int) = (1000, 500)
 			
 			let worldWidth = Int(world.properties.width)
@@ -147,22 +163,18 @@ extension WorldDocument {
 					let verticalChunkRange = verticalChunkIndex ..< min(verticalChunkIndex + chunkSize.height, worldHeight)
 					
 					group.addTask {
-						return generatePaths(from: world, in: verticalChunkRange, in: horizontalChunkRange)
+						return chunkPaths(from: world, in: verticalChunkRange, in: horizontalChunkRange)
 					}
 				}
 			}
-			
 			var mapPaths: MapPaths = [:]
 			for await chunkPaths in group {
-				for (color, line) in chunkPaths {
-					var path = Path()
-					for segment in line.segments {
-						path.addLines([segment.start, segment.end])
+				for (chunk, coloredLines) in chunkPaths {
+					var mapPath: [Color: Path] = [:]
+					for (color, line) in coloredLines {
+						mapPath[color] = line.path
 					}
-					var mapPath = mapPaths[color] ?? []
-					mapPath.append(path)
-					
-					mapPaths[color] = mapPath
+					mapPaths[chunk] = mapPath
 				}
 			}
 			return mapPaths
